@@ -41,15 +41,15 @@
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
 
-        const gridSize = 20;
-        const canvasSize = 400;
+        const gridSize = 20;  // Tamanho de cada quadrado no grid
+        const canvasSize = 400;  // Tamanho da tela do jogo
         let score = 0;
 
-        let snake = [{ x: 160, y: 160 }];
+        let snake = [{ x: 160, y: 160 }];  // Começa com um segmento
         let direction = "right";
-        let food = generateFood();
+        let food = generateFood();  // Gera a primeira comida
 
-        // Função para gerar a comida (ponto vermelho)
+        // Função para gerar a comida em uma posição aleatória dentro do grid
         function generateFood() {
             return {
                 x: Math.floor(Math.random() * (canvasSize / gridSize)) * gridSize,
@@ -57,11 +57,11 @@
             };
         }
 
-        // Função para atualizar o estado do jogo
+        // Função que atualiza a lógica do jogo a cada "loop"
         function update() {
-            // Atualiza a posição da cobra
             let head = { ...snake[0] };
 
+            // Move a cobra dependendo da direção
             switch (direction) {
                 case "right":
                     head.x += gridSize;
@@ -77,56 +77,55 @@
                     break;
             }
 
-            // Adiciona a nova cabeça na frente da cobra
+            // Adiciona a nova cabeça da cobra
             snake.unshift(head);
 
             // Verifica se a cobra comeu a comida
             if (head.x === food.x && head.y === food.y) {
                 score++;
-                food = generateFood(); // Gera nova comida
+                food = generateFood(); // Gera uma nova comida
             } else {
-                snake.pop(); // Remove a cauda para não aumentar de tamanho sem controle
+                snake.pop(); // Remove o último segmento da cobra (ela não cresce)
             }
 
-            // Verifica colisão com as bordas ou com a própria cobra
+            // Verifica se houve colisão (borda ou com ela mesma)
             if (
                 head.x < 0 || head.x >= canvasSize || head.y < 0 || head.y >= canvasSize ||
                 snake.some((segment, index) => index !== 0 && segment.x === head.x && segment.y === head.y)
             ) {
-                resetGame();
+                resetGame();  // Reseta o jogo se houver colisão
             }
 
-            // Atualiza a tela
-            draw();
+            draw();  // Desenha os elementos na tela
         }
 
-        // Função para desenhar o jogo
+        // Função que desenha o estado do jogo na tela
         function draw() {
-            ctx.clearRect(0, 0, canvasSize, canvasSize); // Limpa o canvas
+            ctx.clearRect(0, 0, canvasSize, canvasSize); // Limpa o canvas a cada frame
 
             // Desenha a cobra
             snake.forEach((segment, index) => {
-                ctx.fillStyle = index === 0 ? "#00FF00" : "#FFFFFF"; // Cabeça verde, corpo branco
-                ctx.fillRect(segment.x, segment.y, gridSize, gridSize);
+                ctx.fillStyle = index === 0 ? "#00FF00" : "#FFFFFF";  // Cabeça verde, corpo branco
+                ctx.fillRect(segment.x, segment.y, gridSize, gridSize); // Desenha cada segmento
             });
 
-            // Desenha a comida (ponto vermelho)
-            ctx.fillStyle = "#FF0000";
-            ctx.fillRect(food.x, food.y, gridSize, gridSize);
+            // Desenha a comida (fruta vermelha)
+            ctx.fillStyle = "#FF0000";  // Cor da comida (ponto vermelho)
+            ctx.fillRect(food.x, food.y, gridSize, gridSize);  // Desenha a comida na tela
 
-            // Atualiza a pontuação
+            // Atualiza a pontuação exibida
             document.querySelector(".score").textContent = `Pontuação: ${score}`;
         }
 
-        // Função para reiniciar o jogo
+        // Função para resetar o jogo
         function resetGame() {
-            snake = [{ x: 160, y: 160 }];
-            direction = "right";
-            score = 0;
-            food = generateFood();
+            snake = [{ x: 160, y: 160 }];  // Reseta a cobra
+            direction = "right";  // Reseta a direção
+            score = 0;  // Reseta a pontuação
+            food = generateFood();  // Gera uma nova comida
         }
 
-        // Função para mudar a direção da cobra
+        // Função para mudar a direção da cobra com base nas teclas pressionadas
         function changeDirection(event) {
             switch (event.key) {
                 case "ArrowUp":
@@ -144,16 +143,16 @@
             }
         }
 
-        // Adiciona o evento de escuta para a direção
+        // Adiciona o evento para capturar as teclas pressionadas
         window.addEventListener("keydown", changeDirection);
 
         // Função de loop do jogo
         function gameLoop() {
             update();
-            setTimeout(gameLoop, 100); // Controla a velocidade do jogo
+            setTimeout(gameLoop, 100);  // Controla a velocidade do jogo
         }
 
-        gameLoop(); // Inicia o loop do jogo
+        gameLoop();  // Inicia o loop do jogo
     </script>
 </body>
 </html>
