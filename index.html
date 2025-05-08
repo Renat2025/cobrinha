@@ -5,129 +5,148 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jogo da Cobrinha</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #000;
+            color: #fff;
             font-family: Arial, sans-serif;
         }
+
         canvas {
-            border: 1px solid #000;
-            margin-top: 20px;
+            border: 1px solid #fff;
+        }
+
+        .score {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 20px;
         }
     </style>
 </head>
 <body>
-    <h1>Jogo da Cobrinha</h1>
-    <canvas id="gameCanvas" width="600" height="400"></canvas>
+    <div class="score">Pontuação: 0</div>
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
 
     <script>
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
 
-        const tamanhoBloco = 20;
-        const larguraCanvas = canvas.width;
-        const alturaCanvas = canvas.height;
+        const gridSize = 20;
+        const canvasSize = 400;
+        let score = 0;
 
-        let cobra = [{x: 100, y: 100}];
-        let direcao = 'direita';
-        let comida = gerarComida();
-        let pontuacao = 0;
-        let jogoAtivo = true;
+        let snake = [{ x: 160, y: 160 }];
+        let direction = "right";
+        let food = generateFood();
 
-        // Função para desenhar a cobrinha
-        function desenharCobrinha() {
-            ctx.fillStyle = "green";
-            cobra.forEach(segmento => {
-                ctx.fillRect(segmento.x, segmento.y, tamanhoBloco, tamanhoBloco);
-            });
-        }
-
-        // Função para gerar comida
-        function gerarComida() {
+        function generateFood() {
             return {
-                x: Math.floor(Math.random() * (larguraCanvas / tamanhoBloco)) * tamanhoBloco,
-                y: Math.floor(Math.random() * (alturaCanvas / tamanhoBloco)) * tamanhoBloco
+                x: Math.floor(Math.random() * (canvasSize / gridSize)) * gridSize,
+                y: Math.floor(Math.random() * (canvasSize / gridSize)) * gridSize,
             };
         }
 
-        // Função para desenhar a comida
-        function desenharComida() {
-            ctx.fillStyle = "red";
-            ctx.fillRect(comida.x, comida.y, tamanhoBloco, tamanhoBloco);
-        }
+        function update() {
+            // Atualiza a posição da cobra
+            let head = { ...snake[0] };
 
-        // Função para movimentar a cobrinha
-        function moverCobrinha() {
-            const cabeça = { ...cobra[0] };
+            switch (direction) {
+                case "right":
+                    head.x += gridSize;
+                    break;
+                case "left":
+                    head.x -= gridSize;
+                    break;
+                case "up":
+                    head.y -= gridSize;
+                    break;
+                case "down":
+                    head.y += gridSize;
+                    break;
+            }
 
-            if (direcao === 'cima') cabeça.y -= tamanhoBloco;
-            if (direcao === 'baixo') cabeça.y += tamanhoBloco;
-            if (direcao === 'esquerda') cabeça.x -= tamanhoBloco;
-            if (direcao === 'direita') cabeça.x += tamanhoBloco;
+            // Adiciona a nova cabeça na frente da cobra
+            snake.unshift(head);
 
-            cobra.unshift(cabeça);
-
-            // Verificar se a cobra comeu a comida
-            if (cabeça.x === comida.x && cabeça.y === comida.y) {
-                pontuacao++;
-                comida = gerarComida();
+            // Verifica se a cobra comeu a comida
+            if (head.x === food.x && head.y === food.y) {
+                score++;
+                food = generateFood();
             } else {
-                cobra.pop(); // Remover o último segmento da cobra
+                snake.pop();
+            }
+
+            // Verifica colisão com as bordas ou com a própria cobra
+            if (
+                head.x < 0 || head.x >= canvasSize || head.y < 0 || head.y >= canvasSize ||
+                snake.some((segment, index) => index !== 0 && segment.x === head.x && segment.y === head.y)
+            ) {
+                resetGame();
+            }
+
+            // Atualiza a tela
+            draw();
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvasSize, canvasSize); // Limpa o canvas
+
+            // Desenha a cobra
+            snake.forEach((segment, index) => {
+                ctx.fillStyle = index === 0 ? "#00FF00" : "#FFFFFF"; // Cabeça verde, corpo branco
+                ctx.fillRect(segment.x, segment.y, gridSize, gridSize);
+            });
+
+            // Desenha a comida
+            ctx.fillStyle = "#FF0000";
+            ctx.fillRect(food.x, food.y, gridSize, gridSize);
+
+            // Atualiza a pontuação
+            document.querySelector(".score").textContent = `Pontuação: ${score}`;
+        }
+
+        function resetGame() {
+            snake = [{ x: 160, y: 160 }];
+            direction = "right";
+            score = 0;
+            food = generateFood();
+        }
+
+        function changeDirection(event) {
+            switch (event.key) {
+                case "ArrowUp":
+                    if (direction !== "down") direction = "up";
+                    break;
+                case "ArrowDown":
+                    if (direction !== "up") direction = "down";
+                    break;
+                case "ArrowLeft":
+                    if (direction !== "right") direction = "left";
+                    break;
+                case "ArrowRight":
+                    if (direction !== "left") direction = "right";
+                    break;
             }
         }
 
-        // Função para verificar colisões
-        function verificarColisoes() {
-            const cabeça = cobra[0];
+        window.addEventListener("keydown", changeDirection);
 
-            // Colisão com as bordas
-            if (cabeça.x < 0 || cabeça.x >= larguraCanvas || cabeça.y < 0 || cabeça.y >= alturaCanvas) {
-                jogoAtivo = false;
-            }
-
-            // Colisão com o corpo
-            for (let i = 1; i < cobra.length; i++) {
-                if (cabeça.x === cobra[i].x && cabeça.y === cobra[i].y) {
-                    jogoAtivo = false;
-                }
-            }
+        function gameLoop() {
+            update();
+            setTimeout(gameLoop, 100);
         }
 
-        // Função para desenhar o texto da pontuação
-        function desenharPontuacao() {
-            ctx.fillStyle = "black";
-            ctx.font = "20px Arial";
-            ctx.fillText("Pontuação: " + pontuacao, 10, 30);
-        }
-
-        // Função principal do jogo
-        function atualizarJogo() {
-            if (!jogoAtivo) {
-                ctx.fillStyle = "black";
-                ctx.font = "30px Arial";
-                ctx.fillText("Game Over!", larguraCanvas / 3, alturaCanvas / 2);
-                return;
-            }
-
-            ctx.clearRect(0, 0, larguraCanvas, alturaCanvas); // Limpar o canvas
-            moverCobrinha();
-            verificarColisoes();
-            desenharCobrinha();
-            desenharComida();
-            desenharPontuacao();
-
-            setTimeout(atualizarJogo, 100); // Chama novamente para continuar o jogo
-        }
-
-        // Função para capturar as teclas pressionadas
-        document.addEventListener('keydown', function (event) {
-            if (event.key === 'ArrowUp' && direcao !== 'baixo') direcao = 'cima';
-            if (event.key === 'ArrowDown' && direcao !== 'cima') direcao = 'baixo';
-            if (event.key === 'ArrowLeft' && direcao !== 'direita') direcao = 'esquerda';
-            if (event.key === 'ArrowRight' && direcao !== 'esquerda') direcao = 'direita';
-        });
-
-        // Iniciar o jogo
-        atualizarJogo();
+        gameLoop(); // Inicia o loop do jogo
     </script>
 </body>
 </html>
