@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jogo da Cobrinha</title>
+    <title>Jogo de Agricultura</title>
     <style>
         * {
             margin: 0;
@@ -16,13 +16,14 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            background-color: #000;
-            color: #fff;
+            background-color: #b7e3a1;
             font-family: Arial, sans-serif;
+            color: #333;
         }
 
         canvas {
-            border: 1px solid #fff;
+            border: 2px solid #333;
+            background-color: #f3f3f3;
         }
 
         .score {
@@ -30,129 +31,120 @@
             top: 20px;
             left: 20px;
             font-size: 20px;
+            color: #333;
+        }
+
+        .instructions {
+            position: absolute;
+            bottom: 20px;
+            font-size: 16px;
+            color: #333;
         }
     </style>
 </head>
 <body>
-    <div class="score">Pontuação: 0</div>
-    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    <div class="score">Pontos: 0</div>
+    <div class="instructions">Clique para plantar sementes. Espere para colher!</div>
+    <canvas id="gameCanvas" width="600" height="400"></canvas>
 
     <script>
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
 
-        const gridSize = 20;  // Tamanho de cada quadrado no grid
-        const canvasSize = 400;  // Tamanho da tela do jogo
-        let score = 0;
+        const gridSize = 60; // Tamanho de cada célula do campo
+        const rows = 6;  // Número de linhas
+        const cols = 10; // Número de colunas
+        let score = 0;   // Pontuação
+        let plants = []; // Array para armazenar as plantas
 
-        let snake = [{ x: 160, y: 160 }];  // Começa com um segmento
-        let direction = "right";
-        let food = generateFood();  // Gera a primeira comida
-
-        // Função para gerar a comida em uma posição aleatória dentro do grid
-        function generateFood() {
-            return {
-                x: Math.floor(Math.random() * (canvasSize / gridSize)) * gridSize,
-                y: Math.floor(Math.random() * (canvasSize / gridSize)) * gridSize,
-            };
-        }
-
-        // Função que atualiza a lógica do jogo a cada "loop"
-        function update() {
-            let head = { ...snake[0] };
-
-            // Move a cobra dependendo da direção
-            switch (direction) {
-                case "right":
-                    head.x += gridSize;
-                    break;
-                case "left":
-                    head.x -= gridSize;
-                    break;
-                case "up":
-                    head.y -= gridSize;
-                    break;
-                case "down":
-                    head.y += gridSize;
-                    break;
-            }
-
-            // Adiciona a nova cabeça da cobra
-            snake.unshift(head);
-
-            // Verifica se a cobra comeu a comida
-            if (head.x === food.x && head.y === food.y) {
-                score++;
-                food = generateFood(); // Gera uma nova comida
-            } else {
-                snake.pop(); // Remove o último segmento da cobra (ela não cresce)
-            }
-
-            // Verifica se houve colisão (borda ou com ela mesma)
-            if (
-                head.x < 0 || head.x >= canvasSize || head.y < 0 || head.y >= canvasSize ||
-                snake.some((segment, index) => index !== 0 && segment.x === head.x && segment.y === head.y)
-            ) {
-                resetGame();  // Reseta o jogo se houver colisão
-            }
-
-            draw();  // Desenha os elementos na tela
-        }
-
-        // Função que desenha o estado do jogo na tela
+        // Função para desenhar o campo e as plantas
         function draw() {
-            ctx.clearRect(0, 0, canvasSize, canvasSize); // Limpa o canvas a cada frame
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Limpa o canvas
 
-            // Desenha a cobra
-            snake.forEach((segment, index) => {
-                ctx.fillStyle = index === 0 ? "#00FF00" : "#FFFFFF";  // Cabeça verde, corpo branco
-                ctx.fillRect(segment.x, segment.y, gridSize, gridSize); // Desenha cada segmento
+            // Desenha o campo (grid)
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    ctx.strokeStyle = "#777";
+                    ctx.strokeRect(col * gridSize, row * gridSize, gridSize, gridSize); // Desenha cada célula
+                }
+            }
+
+            // Desenha as plantas no campo
+            plants.forEach(plant => {
+                if (plant.state === "planted") {
+                    ctx.fillStyle = "#7DFF7D"; // Cor das plantas (verde)
+                    ctx.beginPath();
+                    ctx.arc(plant.x * gridSize + gridSize / 2, plant.y * gridSize + gridSize / 2, gridSize / 4, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (plant.state === "grown") {
+                    ctx.fillStyle = "#FFD700"; // Cor das plantas crescidas (amarelo)
+                    ctx.beginPath();
+                    ctx.arc(plant.x * gridSize + gridSize / 2, plant.y * gridSize + gridSize / 2, gridSize / 4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
             });
 
-            // Desenha a comida (fruta vermelha)
-            ctx.fillStyle = "#FF0000";  // Cor da comida (ponto vermelho)
-            ctx.fillRect(food.x, food.y, gridSize, gridSize);  // Desenha a comida na tela
-
-            // Atualiza a pontuação exibida
-            document.querySelector(".score").textContent = `Pontuação: ${score}`;
+            // Atualiza a pontuação
+            document.querySelector(".score").textContent = `Pontos: ${score}`;
         }
 
-        // Função para resetar o jogo
-        function resetGame() {
-            snake = [{ x: 160, y: 160 }];  // Reseta a cobra
-            direction = "right";  // Reseta a direção
-            score = 0;  // Reseta a pontuação
-            food = generateFood();  // Gera uma nova comida
-        }
-
-        // Função para mudar a direção da cobra com base nas teclas pressionadas
-        function changeDirection(event) {
-            switch (event.key) {
-                case "ArrowUp":
-                    if (direction !== "down") direction = "up";
-                    break;
-                case "ArrowDown":
-                    if (direction !== "up") direction = "down";
-                    break;
-                case "ArrowLeft":
-                    if (direction !== "right") direction = "left";
-                    break;
-                case "ArrowRight":
-                    if (direction !== "left") direction = "right";
-                    break;
+        // Função para plantar uma semente
+        function plantSeed(x, y) {
+            if (!isOccupied(x, y)) {
+                plants.push({
+                    x: x,
+                    y: y,
+                    state: "planted",
+                    growthTime: 5000, // Tempo para crescer em milissegundos
+                    growthTimer: Date.now(),
+                });
             }
         }
 
-        // Adiciona o evento para capturar as teclas pressionadas
-        window.addEventListener("keydown", changeDirection);
-
-        // Função de loop do jogo
-        function gameLoop() {
-            update();
-            setTimeout(gameLoop, 100);  // Controla a velocidade do jogo
+        // Função para verificar se uma célula está ocupada
+        function isOccupied(x, y) {
+            return plants.some(plant => plant.x === x && plant.y === y && plant.state !== "harvested");
         }
 
-        gameLoop();  // Inicia o loop do jogo
+        // Função para colher as plantas
+        function harvest(x, y) {
+            const plant = plants.find(p => p.x === x && p.y === y && p.state === "grown");
+            if (plant) {
+                plant.state = "harvested";  // Marca como colhida
+                score += 10; // Incrementa a pontuação
+            }
+        }
+
+        // Função para atualizar o estado das plantas
+        function updatePlants() {
+            plants.forEach(plant => {
+                if (plant.state === "planted" && Date.now() - plant.growthTimer >= plant.growthTime) {
+                    plant.state = "grown"; // Planta cresce após o tempo
+                }
+            });
+        }
+
+        // Função para tratar o clique do mouse
+        canvas.addEventListener("click", (event) => {
+            const x = Math.floor(event.offsetX / gridSize); // Calcula a posição em X
+            const y = Math.floor(event.offsetY / gridSize); // Calcula a posição em Y
+
+            // Se a planta já estiver crescida, colher
+            if (plants.some(plant => plant.x === x && plant.y === y && plant.state === "grown")) {
+                harvest(x, y);
+            } else {
+                plantSeed(x, y); // Caso contrário, plantar uma semente
+            }
+        });
+
+        // Função principal do jogo
+        function gameLoop() {
+            updatePlants(); // Atualiza as plantas (para ver se cresceram)
+            draw(); // Desenha o campo, as plantas e a pontuação
+            requestAnimationFrame(gameLoop); // Loop do jogo
+        }
+
+        gameLoop(); // Inicia o loop do jogo
     </script>
 </body>
 </html>
