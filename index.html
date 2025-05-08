@@ -1,1 +1,130 @@
+import pygame
+import time
+import random
+
+# Inicializar o Pygame
+pygame.init()
+
+# Cores
+preto = (0, 0, 0)
+branco = (255, 255, 255)
+verde = (0, 255, 0)
+vermelho = (255, 0, 0)
+azul = (50, 153, 213)
+
+# Dimensões da tela
+largura = 600
+altura = 400
+
+# Criar a tela
+tela = pygame.display.set_mode((largura, altura))
+pygame.display.set_caption("Jogo da Cobrinha")
+
+# Controle da velocidade
+clock = pygame.time.Clock()
+
+# Tamanho do bloco da cobrinha
+tamanho_bloco = 10
+velocidade = 15
+
+# Fonte para o texto
+font_style = pygame.font.SysFont("bahnschrift", 25)
+font_score = pygame.font.SysFont("comicsansms", 35)
+
+# Função para desenhar a cobrinha
+def nossa_cobrinha(tamanho_bloco, lista_cobrinha):
+    for x in lista_cobrinha:
+        pygame.draw.rect(tela, verde, [x[0], x[1], tamanho_bloco, tamanho_bloco])
+
+# Função para exibir a pontuação
+def sua_pontuacao(pontos):
+    valor = font_score.render("Pontuação: " + str(pontos), True, branco)
+    tela.blit(valor, [0, 0])
+
+# Função para exibir a mensagem
+def mensagem(msg, cor):
+    mesg = font_style.render(msg, True, cor)
+    tela.blit(mesg, [largura / 6, altura / 3])
+
+# Função principal do jogo
+def gameLoop():
+    fim_de_jogo = False
+    jogo_rodando = True
+
+    x1 = largura / 2
+    y1 = altura / 2
+
+    x1_mudar = 0
+    y1_mudar = 0
+
+    lista_cobrinha = []
+    comprimento_cobrinha = 1
+
+    comida_x = round(random.randrange(0, largura - tamanho_bloco) / 10.0) * 10.0
+    comida_y = round(random.randrange(0, altura - tamanho_bloco) / 10.0) * 10.0
+
+    while jogo_rodando:
+
+        while fim_de_jogo:
+            tela.fill(azul)
+            mensagem("Você perdeu! Pressione Q para Sair ou C para Jogo Novo", vermelho)
+            sua_pontuacao(comprimento_cobrinha - 1)
+            pygame.display.update()
+
+            for evento in pygame.event.get():
+                if evento.type == pygame.KEYDOWN:
+                    if evento.key == pygame.K_q:
+                        jogo_rodando = False
+                        fim_de_jogo = False
+                    if evento.key == pygame.K_c:
+                        gameLoop()
+
+        for evento in pygame.event.get():
+            if evento.type == pygame.QUIT:
+                jogo_rodando = False
+            if evento.type == pygame.KEYDOWN:
+                if evento.key == pygame.K_LEFT:
+                    x1_mudar = -tamanho_bloco
+                    y1_mudar = 0
+                elif evento.key == pygame.K_RIGHT:
+                    x1_mudar = tamanho_bloco
+                    y1_mudar = 0
+                elif evento.key == pygame.K_UP:
+                    y1_mudar = -tamanho_bloco
+                    x1_mudar = 0
+                elif evento.key == pygame.K_DOWN:
+                    y1_mudar = tamanho_bloco
+                    x1_mudar = 0
+
+        if x1 >= largura or x1 < 0 or y1 >= altura or y1 < 0:
+            fim_de_jogo = True
+        x1 += x1_mudar
+        y1 += y1_mudar
+        tela.fill(azul)
+        pygame.draw.rect(tela, vermelho, [comida_x, comida_y, tamanho_bloco, tamanho_bloco])
+        lista_cobrinha.append([x1, y1])
+        if len(lista_cobrinha) > comprimento_cobrinha:
+            del lista_cobrinha[0]
+
+        for x in lista_cobrinha[:-1]:
+            if x == [x1, y1]:
+                fim_de_jogo = True
+
+        nossa_cobrinha(tamanho_bloco, lista_cobrinha)
+        sua_pontuacao(comprimento_cobrinha - 1)
+
+        pygame.display.update()
+
+        if x1 == comida_x and y1 == comida_y:
+            comida_x = round(random.randrange(0, largura - tamanho_bloco) / 10.0) * 10.0
+            comida_y = round(random.randrange(0, altura - tamanho_bloco) / 10.0) * 10.0
+            comprimento_cobrinha += 1
+
+        clock.tick(velocidade)
+
+    pygame.quit()
+    quit()
+
+# Iniciar o jogo
+gameLoop()
 
