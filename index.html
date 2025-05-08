@@ -49,6 +49,7 @@
         let direction = "right";
         let food = generateFood();
 
+        // Função para gerar a comida (ponto vermelho)
         function generateFood() {
             return {
                 x: Math.floor(Math.random() * (canvasSize / gridSize)) * gridSize,
@@ -56,6 +57,7 @@
             };
         }
 
+        // Função para atualizar o estado do jogo
         function update() {
             // Atualiza a posição da cobra
             let head = { ...snake[0] };
@@ -81,9 +83,9 @@
             // Verifica se a cobra comeu a comida
             if (head.x === food.x && head.y === food.y) {
                 score++;
-                food = generateFood();
+                food = generateFood(); // Gera nova comida
             } else {
-                snake.pop();
+                snake.pop(); // Remove a cauda para não aumentar de tamanho sem controle
             }
 
             // Verifica colisão com as bordas ou com a própria cobra
@@ -98,6 +100,7 @@
             draw();
         }
 
+        // Função para desenhar o jogo
         function draw() {
             ctx.clearRect(0, 0, canvasSize, canvasSize); // Limpa o canvas
 
@@ -107,7 +110,7 @@
                 ctx.fillRect(segment.x, segment.y, gridSize, gridSize);
             });
 
-            // Desenha a comida
+            // Desenha a comida (ponto vermelho)
             ctx.fillStyle = "#FF0000";
             ctx.fillRect(food.x, food.y, gridSize, gridSize);
 
@@ -115,6 +118,7 @@
             document.querySelector(".score").textContent = `Pontuação: ${score}`;
         }
 
+        // Função para reiniciar o jogo
         function resetGame() {
             snake = [{ x: 160, y: 160 }];
             direction = "right";
@@ -122,6 +126,7 @@
             food = generateFood();
         }
 
+        // Função para mudar a direção da cobra
         function changeDirection(event) {
             switch (event.key) {
                 case "ArrowUp":
@@ -139,11 +144,13 @@
             }
         }
 
+        // Adiciona o evento de escuta para a direção
         window.addEventListener("keydown", changeDirection);
 
+        // Função de loop do jogo
         function gameLoop() {
             update();
-            setTimeout(gameLoop, 100);
+            setTimeout(gameLoop, 100); // Controla a velocidade do jogo
         }
 
         gameLoop(); // Inicia o loop do jogo
